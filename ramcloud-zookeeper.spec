@@ -10,6 +10,7 @@ BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: ant
 BuildRequires: apache-ivy
+BuildRequires: cppunit-devel
 BuildRequires: gcc
 BuildRequires: java-devel
 BuildRequires: java-javadoc
