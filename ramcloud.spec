@@ -59,7 +59,8 @@ install -m 644 -t %{buildroot}/usr/include/ramcloud \
   src/RejectRules.h
 
 install -D -m 755 obj/libramcloud.so %{buildroot}%{_libdir}/libramcloud.so.1.0.0
-ln -s libramcloud.so.1.0.0 %{buildroot}%{_libdir}/libramcloud.so
+ln -s libramcloud.so.1.0.0 %{buildroot}%{_libdir}/libramcloud.so.1
+ln -s libramcloud.so.1 %{buildroot}%{_libdir}/libramcloud.so
 
 
 %clean
