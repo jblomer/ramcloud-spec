@@ -1,0 +1,183 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:           ramcloud
+# Required-Start:     $local_fs $network $named
+# Should-Start:       $time
+# Required-Stop:
+# Should-Stop:
+# Default-Start:      3 4 5
+# Default-Stop:       0 1 2 6
+# Short-Description:  Starts RAMCloud services
+# Description:        Starts the coordinator (optionally) and the master service
+### END INIT INFO
+
+. /etc/init.d/functions
+
+# Return values acc. to LSB for all commands but status:
+# 0	  - success
+# 1       - generic or unspecified error
+# 2       - invalid or excess argument(s)
+# 3       - unimplemented feature (e.g. "reload")
+# 4       - user had insufficient privileges
+# 5       - program is not installed
+# 6       - program is not configured
+# 7       - program is not running
+# 8--199  - reserved (8--99 LSB, 100--149 distrib, 150--199 appl)
+
+RETVAL=0
+LOCKFILE=/var/lock/subsys/ramcloud
+
+[ -f /etc/sysconfig/ramcloud ] && . /etc/sysconfig/ramcloud
+RC_CONFIG=${RC_CONFIG:=/etc/ramcloud.conf}
+
+[ ! -f ${RC_CONFIG} ] && exit 6
+. ${RC_CONFIG}
+[ -f ${RC_CONFIG_LOCAL} ] && . ${RC_CONFIG_LOCAL}
+
+prog_rc_coordinator="/usr/bin/rcCoordinator"
+prog_rc_master="/usr/bin/rcServer"
+
+ip_address=$(nslookup $(hostname) | grep Address: | tail -n1 | awk '{print $2}')
+
+is_root() {
+  [ $(id -u) -eq 0 ] && return 0
+  return 1
+}
+
+
+start() {
+  ! is_root && return 4
+
+  RETVAL=0
+  mkdir -p /var/log/ramcloud
+  mkdir -p /var/run/ramcloud
+  screen -wipe 2>&1 >/dev/null  
+
+  if [ "x$RC_COORDINATOR" = "x" ] && [ ! -f /var/run/ramcloud/coordinator.pid ]; then
+    [ -x $prog_rc_coordinator ] || return 5
+    echo -n $"Starting RAMCloud coordinator: "
+    CMD="screen -dmS rcCoordinator $prog_rc_coordinator \
+      --reset \
+      --logFile /var/log/ramcloud/coordinator.log \
+      --coordinator tcp:host=$(hostname -s),port=$((${RC_PORT} + 1))"
+    $CMD
+    RETVAL=$?
+    PID=$(screen -list | grep rcCoordinator | awk -F. '{print $1}' | sed 's/\t//')
+    if [ $RETVAL -eq 0 ]; then
+      RC_COORDINATOR=$(hostname -s)
+      echo_success
+      echo
+      echo $PID > /var/run/ramcloud/coordinator.pid
+      touch ${LOCKFILE}
+    else
+      echo_failure
+      echo
+    fi
+  fi
+
+  if [ $RETVAL -eq 0 ] && [ ! -f /var/run/ramcloud/master.pid ]; then
+    [ -x $prog_nc_master ] || return 5
+    echo -n $"Starting RAMCloud master: "
+    CMD="screen -dmS rcMaster $prog_rc_master \
+      --logFile /var/log/ramcloud/server.log \
+      --coordinator tcp:host=${RC_COORDINATOR},port=$((${RC_PORT}+1)) \
+      --local tcp:host=$(hostname -s),port=${RC_PORT} \
+      --totalMasterMemory ${RC_MEMORY_MB} \
+      --masterOnly \
+      --replicas 0 \
+      --segmentFrames $((${RC_MEMORY_MB}*1/8)) \
+      --hashTableMemory $((${RC_MEMORY_MB}/4))"
+    $CMD
+    RETVAL=$(($RETVAL + $?))
+    PID=$(screen -list | grep rcMaster | awk -F. '{print $1}' | sed 's/\t//')
+    if [ $RETVAL -eq 0 ]; then
+      echo_success
+      echo
+      echo $PID > /var/run/ramcloud/master.pid
+      touch ${LOCKFILE}
+    else
+      echo_failure
+      echo
+      RETVAL=1
+    fi
+  fi
+
+  return $RETVAL
+}
+
+
+stop() {
+  [ ! is_root ] && return 4
+
+  if [ -f /var/run/ramcloud/coordinator.pid ]; then
+    echo -n $"Shutting down coordinator: "
+    kill $(cat /var/run/ramcloud/coordinator.pid)
+    rm -f /var/run/ramcloud/coordinator.pid
+    echo_success
+    echo
+  fi
+
+  if [ -f /var/run/ramcloud/master.pid ]; then
+    echo -n $"Shutting down master: "
+    kill $(cat /var/run/ramcloud/master.pid)
+    rm -f /var/run/ramcloud/master.pid
+    echo_success
+    echo
+  fi
+
+  [ $RETVAL -eq 0 ] && rm -f ${LOCKFILE}
+
+  return $RETVAL
+}
+
+
+status() {
+  [ -f /var/run/ramcloud/coordinator.pid ] &&
+    echo "Coordinator running as pid $(cat /var/run/ramcloud/coordinator.pid)"
+  [ -f /var/run/ramcloud/master.pid ] &&
+    echo "Master running as pid $(cat /var/run/ramcloud/master.pid)"
+}
+
+
+case "$1" in
+  start)
+    start
+    RETVAL=$?
+  ;;
+  stop)
+    stop
+    RETVAL=$?
+  ;;
+  restart|try-restart|condrestart)
+    ## Stop the service and regardless of whether it was
+    ## running or not, start it again.
+    #
+    ## Note: try-restart is now part of LSB (as of 1.9).
+    ## RH has a similar command named condrestart.
+    stop
+    start
+    RETVAL=$?
+  ;;
+    reload|force-reload)
+    # ToDO
+    RETVAL=3
+  ;;
+  status)
+    # Return value is slightly different for the status command:
+    # 0 - service up and running
+    # 1 - service dead, but /var/run/  pid  file exists
+    # 2 - service dead, but /var/lock/ lock file exists
+    # 3 - service not running (unused)
+    # 4 - service status unknown :-(
+    # 5--199 reserved (5--99 LSB, 100--149 distro, 150--199 appl.)
+    status
+    RETVAL=3
+  ;;
+  *)
+    echo "Usage: $0 {start|stop|status|try-restart|condrestart|restart|force-reload|reload}"
+    RETVAL=3
+  ;;
+esac
+
+exit $RETVAL

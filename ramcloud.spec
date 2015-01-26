@@ -8,6 +8,8 @@ Group:		Applications/System
 License:	MIT
 URL:		http://ramcloud.stanford.edu
 Source0:	%{name}-%{version}.tar.gz
+Source1:	ramcloud-init
+Source2:	ramcloud.conf
 # The tarball is created like so 'git archive --format=tar --prefix=ramcloud-1.0/ --output=ramcloud-1.0.tar fbe68a'
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -51,6 +53,8 @@ make %{?_smp_mflags} \
 rm -rf %{buildroot}
 install -D -m 755 obj/server %{buildroot}%{_bindir}/rcServer
 install -D -m 755 obj/coordinator %{buildroot}%{_bindir}/rcCoordinator
+install -D -m 755 %{SOURCE1} %{buildroot}%{_sysconfdir}/init.d/ramcloud
+install -D -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/ramcloud.conf 
 
 mkdir -p %{buildroot}/usr/include/ramcloud
 install -m 644 -t %{buildroot}/usr/include/ramcloud \
@@ -71,6 +75,8 @@ rm -rf %{buildroot}
 %defattr(-,root,root,-)
 %{_bindir}/rcServer
 %{_bindir}/rcCoordinator
+%{_sysconfdir}/ramcloud.conf
+%{_sysconfdir}/init.d/ramcloud
 %doc
 
 %files devel
