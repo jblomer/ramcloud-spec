@@ -133,10 +133,16 @@ stop() {
 
 
 status() {
-  [ -f /var/run/ramcloud/coordinator.pid ] &&
+  local retval=3
+  if [ -f /var/run/ramcloud/coordinator.pid ]; then
     echo "Coordinator running as pid $(cat /var/run/ramcloud/coordinator.pid)"
-  [ -f /var/run/ramcloud/master.pid ] &&
+    retval=1
+  fi
+  if [ -f /var/run/ramcloud/master.pid ]; then
     echo "Master running as pid $(cat /var/run/ramcloud/master.pid)"
+    retval=1
+  fi
+  return $retval
 }
 
 
@@ -172,7 +178,7 @@ case "$1" in
     # 4 - service status unknown :-(
     # 5--199 reserved (5--99 LSB, 100--149 distro, 150--199 appl.)
     status
-    RETVAL=3
+    RETVAL=$?
   ;;
   *)
     echo "Usage: $0 {start|stop|status|try-restart|condrestart|restart|force-reload|reload}"
