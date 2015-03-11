@@ -1,0 +1,11 @@
+--- src/Transport.h.orig	2015-03-11 19:34:55.817001559 +0100
++++ src/Transport.h	2015-03-11 19:35:32.054001559 +0100
+@@ -365,7 +365,7 @@
+     /// to trigger retransmissions.  The current value for this was chosen
+     /// somewhat subjectively in 11/2011, based on the presence of time gaps
+     /// in the poller of as much as 250ms.
+-    static const uint32_t DEFAULT_TIMEOUT_MS = 500;
++    static const uint32_t DEFAULT_TIMEOUT_MS = 10000;
+ 
+     /**
+      * One ServerPort instance is created for a lissen port 

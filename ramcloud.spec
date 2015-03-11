@@ -11,6 +11,7 @@ Source0:	%{name}-%{version}.tar.gz
 Source1:	ramcloud-init
 Source2:	ramcloud.conf
 Patch0:		large_multiop.patch
+Patch1:		large_timeout.patch
 # The tarball is created like so 'git archive --format=tar --prefix=ramcloud-1.0/ --output=ramcloud-1.0.tar fbe68a'
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -43,6 +44,7 @@ RAMCloud shared libraries
 %setup -q
 
 %patch0 -p0
+%patch1 -p0
 
 %build
 make %{?_smp_mflags} \
