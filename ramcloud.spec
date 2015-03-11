@@ -10,6 +10,7 @@ URL:		http://ramcloud.stanford.edu
 Source0:	%{name}-%{version}.tar.gz
 Source1:	ramcloud-init
 Source2:	ramcloud.conf
+Patch0:		large_multiop.patch
 # The tarball is created like so 'git archive --format=tar --prefix=ramcloud-1.0/ --output=ramcloud-1.0.tar fbe68a'
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -41,6 +42,7 @@ RAMCloud shared libraries
 %prep
 %setup -q
 
+%patch0 -p0
 
 %build
 make %{?_smp_mflags} \

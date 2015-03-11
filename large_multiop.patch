@@ -1,0 +1,10 @@
+--- src/MultiOp.h.orig	2015-03-11 14:59:55.250001615 +0100
++++ src/MultiOp.h	2015-03-11 15:00:06.432001587 +0100
+@@ -102,7 +102,7 @@
+ #ifdef TESTING
+         static const uint32_t MAX_OBJECTS_PER_RPC = 3;
+ #else
+-        static const uint32_t MAX_OBJECTS_PER_RPC = 20;
++        static const uint32_t MAX_OBJECTS_PER_RPC = 300;
+ #endif
+         MultiOpObject* requests[MAX_OBJECTS_PER_RPC];
