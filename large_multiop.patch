@@ -5,6 +5,6 @@
          static const uint32_t MAX_OBJECTS_PER_RPC = 3;
  #else
 -        static const uint32_t MAX_OBJECTS_PER_RPC = 20;
-+        static const uint32_t MAX_OBJECTS_PER_RPC = 300;
++        static const uint32_t MAX_OBJECTS_PER_RPC = 2000;
  #endif
          MultiOpObject* requests[MAX_OBJECTS_PER_RPC];
