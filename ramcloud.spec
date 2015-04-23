@@ -43,9 +43,6 @@ RAMCloud shared libraries
 %prep
 %setup -q
 
-%patch0 -p0
-%patch1 -p0
-
 %build
 make %{?_smp_mflags} \
   DEBUG=no \
